@@ -2,14 +2,11 @@ Welcome to your new dbt project!
 
 ### Using the starter project
 
-Try running the following commands:
-- dbt run
-- dbt test
+See [prasoon_dbt_cli/README.md](prasoon_dbt_cli/README.md) for the complete project documentation including setup, architecture, and key commands.
 
+### Learning Resources
 
-### Resources:
-- Learn more about dbt [in the docs](https://docs.getdbt.com/docs/introduction)
-- Check out [Discourse](https://discourse.getdbt.com/) for commonly asked questions and answers
-- Join the [chat](https://community.getdbt.com/) on Slack for live discussions and support
-- Find [dbt events](https://events.getdbt.com) near you
-- Check out [the blog](https://blog.getdbt.com/) for the latest news on dbt's development and best practices
+- [NOTES.md](prasoon_dbt_cli/NOTES.md) — DBT concepts and best practices
+- [CHANGELOG.md](prasoon_dbt_cli/CHANGELOG.md) — Project version history
+- [DBT Docs](https://docs.getdbt.com/docs/introduction)
+- [Databricks Documentation](https://docs.databricks.com/)
