@@ -19,9 +19,14 @@ Models are the core component where transformation logic is defined — they hol
 **Execution:**
 
 ```bash
-dbt run                          # Run all models
-dbt run --select <model_name>    # Run one model
+# Run all models in the project
+dbt run
+
+# Run a specific model by name
+dbt run --select <model_name>
 ```
+
+> `<model_name>` is the name of the SQL file without its extension (e.g. a file called `my_model.sql` is selected as `my_model`).
 
 **Lineage & Troubleshooting:** All models are tracked for lineage. Compiled SQL lives in `target/` and is useful for debugging or verifying transformations.
 
@@ -31,11 +36,13 @@ dbt run --select <model_name>    # Run one model
 
 Configurations and properties control how models are built and documented. They follow the same hierarchy described above.
 
-**Block-level config** (highest precedence) — defined directly in the SQL file:
+**Block-level config** (highest precedence) — defined directly in the SQL file using a Jinja config block:
 
 ```sql
-{{ config(materialized='view') }}
+{{ config(materialized='<materialization_type>') }}
 ```
+
+> `<materialization_type>` is one of: `table`, `view`, `incremental`, `ephemeral`.
 
 **Properties file** (`properties.yml`) — sits in the models directory and lets you centralize config for multiple models:
 
@@ -43,31 +50,30 @@ Configurations and properties control how models are built and documented. They 
 - Generic data tests (`unique`, `not_null`, etc.)
 - Model-level configs such as materialization and schema overrides
 
-**Project-level** (`dbt_project.yml`) — best for global defaults, e.g. setting all bronze models to `table` materialization.
+**Project-level** (`dbt_project.yml`) — best for global defaults, e.g. setting all models in a directory to `table` materialization.
 
 ---
 
 ## Custom Schemas
 
-By default, DBT builds models in the schema defined in your connection profile. Custom schemas let you route models into specific layers (bronze, silver, gold) for a clean, layered architecture.
+By default, DBT builds models in the schema defined in your connection profile. Custom schemas let you route models into specific layers (e.g. bronze, silver, gold) for a clean, layered architecture.
 
 **How it works:**
 
-- Set a `schema:` key in `dbt_project.yml` for a whole directory, or in a model's `config` block / `properties.yml` entry for granular control.
-- By default, DBT appends the custom schema name to the target schema (e.g. `default_bronze`). To use the schema name as-is (just `bronze`), override the `generate_schema_name` macro in your `macros/` folder.
+- Set a `schema:` key in `dbt_project.yml` for a whole directory, or inside a model's `config` block / `properties.yml` entry for per-model control.
+- By default, DBT appends the custom schema name to the target schema (e.g. `<target_schema>_<custom_schema>`). To use only the custom schema name as-is, override the `generate_schema_name` macro in your `macros/` folder.
 
 **Example `dbt_project.yml` setup:**
 
 ```yaml
 models:
-  my_project:
-    bronze:
+  <project_name>:         # matches the `name` field at the top of dbt_project.yml
+    <layer_folder_name>:  # matches the folder name under models/
       +materialized: table
-      schema: bronze
-    silver:
-      +materialized: table
-      schema: silver
+      schema: <schema_name>
 ```
+
+> `+materialized` applies the setting to all models inside that folder. `schema` routes those models to a specific schema in your data warehouse.
 
 **Key takeaway:** Custom schemas are essential for a clean medallion architecture — they enforce logical separation between raw, cleansed, and curated data layers.
 
@@ -77,12 +83,13 @@ models:
 
 Node selection lets you run or test specific parts of your project instead of the entire DAG, saving compute costs during development.
 
-| Command | What it does |
+| Use case | Command |
 |---|---|
-| `dbt run --select bronze_dim_date` | Run a single named model |
-| `dbt run --select "bronze_dim_date bronze_dim_store"` | Run multiple specific models |
-| `dbt run --select models/bronze/` | Run all models in a directory |
+| Run all models | `dbt run` |
+| Run a single model | `dbt run --select <model_name>` |
+| Run several specific models | `dbt run --select "<model_name_1> <model_name_2>"` |
+| Run all models inside a folder | `dbt run --select models/<folder_name>/` |
 
-Use `-s` as a shorthand for `--select`.
+> `--select` can be shortened to `-s`. Values inside quotes are space-separated model names. A trailing `/` on a path means "all models in this directory".
 
-**Why it matters:** Compute resources on platforms like Databricks are expensive. Targeting only the models you are actively developing avoids unnecessary cost.
+**Why it matters:** Compute resources on platforms like Databricks are billed by usage. Selecting only the models you are actively working on avoids unnecessary cost.
