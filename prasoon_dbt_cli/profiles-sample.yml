@@ -1,0 +1,11 @@
+profile_name:
+  outputs:
+    dev:
+      catalog: databricks_catalog
+      host: dbc-d1234abc-1234.cloud.databricks.com
+      http_path: /sql/1.0/warehouses/123abcde4fa5499f
+      schema: databricks_schema
+      threads: 2
+      token: dapidf329and4df27754275c35bb4cac0086
+      type: databricks
+  target: dev

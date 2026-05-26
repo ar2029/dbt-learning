@@ -1,0 +1,12 @@
+sources:
+  - name: source_schema
+    database: dbt_tutorial_catalog_dbx  
+    schema: source_schema_dbx
+    tables:
+      - name: fact_sales
+      - name: fact_returns
+      - name: dim_customer
+      - name: dim_date
+      - name: dim_product
+      - name: dim_store
+    
