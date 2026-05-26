@@ -22,12 +22,19 @@ prasoon_dbt_cli/
 
 ## Data Architecture
 
-This project follows a **medallion architecture** using custom schemas to organize data layers:
+This project demonstrates **bronze layer transformation** using Databricks and DBT:
 
-- **source_schema_dbx** (raw source layer): Contains raw dimension and fact tables ingested from source systems
-- **bronze** (bronze layer): DBT transforms raw source tables into bronze models with consistent structure and naming
-  - `bronze_dim_customer`, `bronze_dim_date`, `bronze_dim_product`, `bronze_dim_store` (dimension tables)
-  - `bronze_fact_returns`, `bronze_fact_sales` (fact tables)
+### Raw Source Layer (External to DBT)
+- **source_schema_dbx**: Raw data ingested from source systems using REST API or other ingestion tools
+  - Raw dimension tables: `dim_customer`, `dim_date`, `dim_product`, `dim_store`
+  - Raw fact tables: `fact_returns`, `fact_sales`
+
+### Bronze Layer (Transformed by DBT)
+- **bronze**: DBT transforms and standardizes raw source tables, creating the bronze layer
+  - Bronze dimension tables: `bronze_dim_customer`, `bronze_dim_date`, `bronze_dim_product`, `bronze_dim_store`
+  - Bronze fact tables: `bronze_fact_returns`, `bronze_fact_sales`
+
+**Data Flow:** `source_schema_dbx` (raw) → **DBT transformation** → `bronze` (standardized)
 
 The custom schema configuration in `dbt_project.yml` routes all bronze models to the `bronze` schema:
 
@@ -39,11 +46,16 @@ models:
       schema: bronze
 ```
 
-### Data Flow Visualization
+This configuration ensures DBT reads from `source_schema_dbx` (raw data) and writes to the `bronze` schema (transformed data).
 
-![Databricks Catalog showing source_schema_dbx and bronze layers](images/databricks_medallion_architecture.png)
+### Visualization
 
-The screenshot above shows the Databricks catalog with both the source layer (`source_schema_dbx`) and the bronze layer (`bronze`) created by this DBT project, all running on **Databricks Serverless SQL Compute (2XS warehouse)**.
+![Databricks Bronze Layer Transformation - source to bronze](images/databricks_bronze_layer_transformation.png)
+
+The screenshot shows the Databricks catalog demonstrating the bronze layer transformation:
+- **Left sidebar:** `source_schema_dbx` with raw tables (`dim_customer`, `dim_date`, `dim_product`)
+- **Left sidebar:** `bronze` schema with transformed tables (`bronze_dim_customer`, `bronze_dim_date`, etc.)
+- **Compute:** Serverless Starter Warehouse (2XS) running on Databricks Free Edition
 
 ## Key Commands
 
