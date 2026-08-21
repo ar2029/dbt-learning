@@ -6,6 +6,13 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+### Added
+- `NOTES.md` — DBT Tests section covering generic tests (`unique`, `not_null`, `accepted_values`, `relationships`, including multiple tests per column), severity levels (`error`/`warn`), singular tests for business-logic/KPI checks, custom generic tests (`tests/generic/`), and a pointer to unit tests
+- `README.md` — Testing section summarizing test types, with a link to `NOTES.md`
+- `tests/non_negative_test.sql` — singular test asserting `bronze_fact_sales.net_amount` / `gross_amount` are never negative
+- `tests/generic/generic_non_negative.sql` — custom generic test (`generic_non_negative`) reusable across any model/column
+- Generic tests wired onto bronze models in `properties.yml`: `unique`/`not_null` on `bronze_dim_product.product_sk`, `bronze_fact_sales.sales_id`, and `bronze_dim_store.store_sk`; `accepted_values` on `bronze_dim_store.store_name`; `generic_non_negative` on `bronze_fact_sales.gross_amount`
+
 ---
 
 ## [0.2.0] - 2026-05-26

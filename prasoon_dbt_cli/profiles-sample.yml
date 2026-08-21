@@ -1,4 +1,4 @@
-profile_name:
+<profile_name>:
   outputs:
     dev:
       catalog: databricks_catalog

@@ -60,12 +60,19 @@ The screenshot shows the Databricks catalog demonstrating the bronze layer trans
 ## Key Commands
 
 ```bash
-dbt run                          # Run all models
-dbt run --select bronze_dim_date # Run a single model
-dbt run --select models/bronze/  # Run all bronze models
-dbt test                         # Run all tests
-dbt clean                        # Remove target/ and dbt_packages/
+dbt run                               # Run all models
+dbt run --select bronze_dim_date      # Run a single model
+dbt run --select models/bronze/       # Run all bronze models
+dbt test                              # Run all tests
+dbt test --select bronze_dim_customer # Run tests for one model
+dbt clean                             # Remove target/ and dbt_packages/
 ```
+
+## Testing
+
+DBT supports three ways to test: **generic tests** (`unique`, `not_null`, `accepted_values`, `relationships`) applied to columns via YAML — a column can list several at once — **singular tests**, custom SQL files in `tests/` for business-logic/KPI checks, and **custom generic tests**, reusable test macros defined in `tests/generic/`. A failing test can be configured to `error` (block the run) or just `warn`.
+
+See [NOTES.md](NOTES.md#dbt-tests) for the full breakdown, including unit tests, which validate a model's SQL logic against static mock data rather than the warehouse.
 
 ## Learning Notes
 
