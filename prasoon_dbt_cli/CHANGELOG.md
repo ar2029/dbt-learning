@@ -12,6 +12,11 @@ All notable changes to this project are documented here. Format loosely follows 
 - `tests/non_negative_test.sql` — singular test asserting `bronze_fact_sales.net_amount` / `gross_amount` are never negative
 - `tests/generic/generic_non_negative.sql` — custom generic test (`generic_non_negative`) reusable across any model/column
 - Generic tests wired onto bronze models in `properties.yml`: `unique`/`not_null` on `bronze_dim_product.product_sk`, `bronze_fact_sales.sales_id`, and `bronze_dim_store.store_sk`; `accepted_values` on `bronze_dim_store.store_name`; `generic_non_negative` on `bronze_fact_sales.gross_amount`
+- `NOTES.md` — DBT Seeds and The Analysis Folder sections, covering seed config hierarchy, `dbt seed`, referencing seeds via `ref()`, and using `analyses/` for exploratory SQL that never gets built
+- `README.md` — Seeds & Analyses section, plus `dbt seed` commands in Key Commands
+- `seeds/lookup.csv` — a small customer lookup seed, loaded into the `bronze` schema via `seeds: +schema: bronze` in `dbt_project.yml`
+- `analyses/data_exploration.sql` — example analysis referencing the `lookup` seed via `ref()`
+- `NOTES.md` — The `target/` Directory section: what it contains, when it's (re)generated vs. cleaned by `dbt clean`, and why it's gitignored rather than committed
 
 ---
 

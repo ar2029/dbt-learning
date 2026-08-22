@@ -3,10 +3,10 @@
 # and underscores. A good package name should reflect your organization's
 # name or the intended use of these models
 name: 'prasoon_dbt_cli'
-version: '1.0.0'
+version: '1.1.0'
 
 # This setting configures which "profile" dbt uses for this project.
-profile: 'prasoon_dbt_cli'
+profile: 'prasoon_dbx_profile'
 
 # These configurations specify where dbt should look for different types of files.
 # The `model-paths` config, for example, states that models in this project can be
@@ -41,3 +41,8 @@ models:
     gold:
       +materialized: table
       schema: gold
+
+
+seeds:
+  prasoon_dbt_cli:
+    +schema: bronze

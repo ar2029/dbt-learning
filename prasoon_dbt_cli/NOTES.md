@@ -186,3 +186,85 @@ data_tests:
 **Unit tests** validate a model's SQL *logic* against static, hand-written mock inputs rather than real warehouse data — no dependency on what's currently in the table. The setup is specific enough to be worth reading directly: see dbt's [Unit tests](https://docs.getdbt.com/docs/build/unit-tests) docs.
 
 **Why it matters:** Tests catch broken assumptions — duplicate keys, orphaned foreign keys, out-of-range values, KPI logic that silently breaks — before they propagate downstream. That matters most in a bronze → silver → gold pipeline, where a bad row compounds at every later layer.
+
+---
+
+## DBT Seeds
+
+Seeds are static lookup or mapping tables — small, rarely-changing reference data (region codes, a customer-name lookup, a currency table) that you want loaded into the warehouse as a table, but that doesn't come from a source system.
+
+**How to create:** Drop a `.csv` file into the `seeds/` directory. The filename (without extension) becomes the table name.
+
+**Configuration:** Seeds need a schema, like models. Set it at the project level in `dbt_project.yml` for a global default, and override per seed via a `properties.yml`-style config or a `config` block, following the same block > properties > project hierarchy as models:
+
+```yaml
+seeds:
+  <project_name>:         # matches the `name` field at the top of dbt_project.yml
+    +schema: <schema_name>
+```
+
+> Applies to every seed in `seeds/`. To override one seed, add a `config:` entry for it in a `properties.yml` under `seeds/`, or set `{{ config(schema='<schema_name>') }}` — seeds don't take Jinja config blocks the way SQL models do, so the properties-file route is the common override path.
+
+**Loading and referencing:**
+
+```bash
+dbt seed                            # load every CSV in seeds/ as a table
+dbt seed --select <seed_name>       # load a single seed (filename without .csv)
+```
+
+```sql
+select * from {{ ref('<seed_name>') }}
+```
+
+> Once loaded, a seed is just another table — reference it with `ref()` exactly like a model, from any downstream model or analysis.
+
+Official docs: [Add seeds to your DAG](https://docs.getdbt.com/docs/build/seeds).
+
+**Why it matters:** Seeds keep small reference data version-controlled and reproducible alongside the rest of the project, instead of being a manual one-off table someone created by hand in the warehouse.
+
+---
+
+## The Analysis Folder
+
+The `analyses/` folder holds ad-hoc SQL for exploration and debugging that you deliberately do **not** want built as a table or view.
+
+**Purpose:** Quick checks, debugging, or referencing data for yourself — keeps exploratory queries out of the production model DAG.
+
+**Independence:** Files here are not run by `dbt run` and never materialize into the target schema. `dbt compile` will still compile them (useful to sanity-check the SQL), and the compiled output lands in `target/compiled/<project_name>/analyses/`.
+
+**Still dbt-aware:** You can use `ref()` and `source()` inside an analysis file exactly as you would in a model — so a query can join a model, a seed, or a source without you having to hardcode the schema/table name:
+
+```sql
+-- analyses/<analysis_name>.sql
+select *
+from {{ ref('<model_or_seed_name>') }}
+```
+
+> `ref()` resolves the same way it does in a model. If the target is a seed, this is also how you'd reference a seed from anywhere in the project — an analysis, a model, or a test.
+
+**Why it matters:** It gives you a version-controlled place for exploratory queries — with full `ref()`/`source()` support — without those queries ever showing up as objects in the warehouse.
+
+---
+
+## The `target/` Directory
+
+`target/` is DBT's build output — everything it generates while parsing and running the project. It's not something you write to by hand.
+
+**What's in it:**
+
+| Path | Contents |
+|---|---|
+| `target/compiled/<project_name>/` | Compiled SQL — Jinja resolved, `ref()`/`source()` swapped for real table paths — mirroring `models/`, `analyses/`, `tests/` |
+| `target/run/<project_name>/` | The actual SQL DBT sent to the warehouse for each model/seed run, including the DDL wrapper |
+| `manifest.json` | The full compiled representation of the project graph — every node, its config, and its dependencies |
+| `run_results.json` | Pass/fail status and timing for the most recent invocation (`run`, `test`, `seed`, ...) |
+
+**When it's created:** The first time you run almost any DBT command — `dbt run`, `dbt test`, `dbt seed`, `dbt compile`, even `dbt parse` — regenerates the relevant parts of `target/`. It isn't a one-time setup step; it's rebuilt (or incrementally updated, via `partial_parse.msgpack`) on every invocation.
+
+**When it's cleaned:** `dbt clean` deletes it, along with `dbt_packages/` — both are listed under `clean-targets:` in `dbt_project.yml`. There's no automatic cleanup otherwise; it just accumulates and gets overwritten on each run.
+
+**Not committed:** `target/` is listed in `.gitignore` and has never been tracked in this repo. It shouldn't be — it's fully reproducible from the source files (`models/`, `seeds/`, `tests/`, `dbt_project.yml`) plus whatever's in the warehouse at parse time, so committing it would just be committing a stale, regenerable build artifact. Worse, `manifest.json` and the compiled SQL under `target/compiled/`/`target/run/` embed resolved database/schema/table names and full query text — not credentials, but more of the warehouse's shape than needs to sit in version control.
+
+Official docs: [About dbt artifacts](https://docs.getdbt.com/reference/artifacts/dbt-artifacts).
+
+**Why it matters:** Treat `target/` the way you'd treat any other build output (`dist/`, `node_modules/`, `__pycache__/`) — safe to delete anytime with `dbt clean`, and always safe to regenerate by re-running DBT.
